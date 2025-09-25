@@ -1,58 +1,19 @@
 @startuml
 
-left to right direction
+title Sample Microservices Architecture
 
-hexagon "Website" as web #e17c34
-hexagon "Mobile App" as mobile #efc13a
-hexagon "ERP System" as erp
+actor User
 
-rectangle #line.dashed {
+rectangle "API Gateway" as APIGW
+rectangle "Service A" as A
+rectangle "Service B" as B
+database "PostgreSQL DB" as DB
 
-    hexagon "API Gateway" as gateway #00a6e2
+User --> APIGW : Sends Request
+APIGW --> A : Forwards Request
+APIGW --> B : Forwards Request
 
-    hexagon "Users\nService" as users #48c977 {
-        database "DB" as usersdb #48c977
-    }
-
-    hexagon "  Analytics\nService" as analytics #965fb3 {
-        database "DB" as analyticsdb #965fb3
-    }
-
-    rectangle [] as monolith {
-        hexagon "Cart\nComponent" as cart #48c977
-        hexagon "Inventory\nComponent" as inventory #48c977
-        hexagon "Shipping\nComponent" as shipping #48c977
-        database "DB" as monolithdb #48c977
-    }
-
-    queue "Message Bus" as bus #48c977
-
-    gateway  -[hidden]down- users
-    users    -[hidden]down- monolith
-    monolith -[hidden]down- analytics
-
-    bus .left. users
-    bus .left. analytics
-    bus .left. monolith
-
-}
-
-web -[#bb3b32]- gateway
-mobile -[#bb3b32]- gateway
-
-cart      .. monolithdb
-inventory .. monolithdb
-shipping  .. monolithdb
-
-analytics ---> erp : Data Export
-
-legend left
-    |<#e17c34>    | Web Client Component |
-    |<#efc13a>    | Mobile Client Component |
-    |<#00a6e2>    | Gateway Component |
-    |<#48c977>    | Backend Component |
-    |<#965fb3>    | Analytics Component |
-    |<#b7bbbd>    | External Component |
-endlegend
+A --> DB : Read/Write
+B --> DB : Read/Write
 
 @enduml
