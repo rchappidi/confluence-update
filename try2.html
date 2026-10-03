@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Enterprise Microservices Architecture</title>
+
+  <!-- Mermaid -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
+  <style>
+
+    /* =========================================================
+       GLOBAL
+       ========================================================= */
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 32px;
+      background: #f4f6f8;
+      color: #1f2937;
+      font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+    }
+
+
+    /* =========================================================
+       PAGE HEADER
+       ========================================================= */
+
+    .page-header {
+      max-width: 1600px;
+      margin: 0 auto 24px auto;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 650;
+      letter-spacing: -0.4px;
+      color: #172033;
+    }
+
+    .page-subtitle {
+      margin-top: 7px;
+      font-size: 14px;
+      color: #667085;
+    }
+
+
+    /* =========================================================
+       MAIN CARD
+       ========================================================= */
+
+    .architecture-card {
+      max-width: 1600px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #e2e6eb;
+      border-radius: 10px;
+      box-shadow:
+        0 1px 2px rgba(16, 24, 40, 0.04),
+        0 4px 14px rgba(16, 24, 40, 0.04);
+      overflow: hidden;
+    }
+
+
+    /* =========================================================
+       TOOLBAR
+       ========================================================= */
+
+    .toolbar {
+      min-height: 58px;
+      padding: 12px 18px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      border-bottom: 1px solid #e7eaee;
+      background: #fafbfc;
+    }
+
+    .filter-status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+
+      font-size: 13px;
+      color: #667085;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #98a2b3;
+    }
+
+    .status-dot.active {
+      background: #2563eb;
+    }
+
+
+    /* =========================================================
+       RESET BUTTON
+       ========================================================= */
+
+    .reset-button {
+      display: none;
+
+      border: 1px solid #d0d5dd;
+      border-radius: 6px;
+
+      background: #ffffff;
+      color: #344054;
+
+      padding: 7px 13px;
+
+      font-size: 13px;
+      font-weight: 500;
+
+      cursor: pointer;
+
+      transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+    }
+
+    .reset-button:hover {
+      background: #f2f4f7;
+      border-color: #98a2b3;
+    }
+
+
+    /* =========================================================
+       DIAGRAM AREA
+       ========================================================= */
+
+    .diagram-wrapper {
+      position: relative;
+
+      min-height: 620px;
+
+      padding: 30px;
+
+      background:
+        linear-gradient(
+          180deg,
+          #ffffff 0%,
+          #fbfcfd 100%
+        );
+
+      overflow: auto;
+    }
+
+    #diagram {
+      min-width: 900px;
+      display: flex;
+      justify-content: center;
+    }
+
+
+    /* =========================================================
+       MERMAID
+       ========================================================= */
+
+    #diagram svg {
+      max-width: none;
+      height: auto;
+    }
+
+    #diagram .node {
+      cursor: pointer;
+    }
+
+    #diagram .node rect,
+    #diagram .node polygon,
+    #diagram .node path {
+      transition:
+        stroke 0.15s ease,
+        stroke-width 0.15s ease,
+        filter 0.15s ease;
+    }
+
+    #diagram .node:hover rect,
+    #diagram .node:hover polygon,
+    #diagram .node:hover path {
+      stroke: #2563eb !important;
+      stroke-width: 2px !important;
+
+      filter:
+        drop-shadow(
+          0 2px 4px
+          rgba(37, 99, 235, 0.12)
+        );
+    }
+
+
+    /* =========================================================
+       DOMAIN LABELS
+       ========================================================= */
+
+    #diagram .cluster rect {
+      rx: 8px;
+      ry: 8px;
+    }
+
+    #diagram .cluster-label text {
+      font-weight: 600 !important;
+      font-size: 13px !important;
+      fill: #475467 !important;
+    }
+
+
+    /* =========================================================
+       SERVICE POPUP
+       ========================================================= */
+
+    #serviceMenu {
+      display: none;
+
+      position: fixed;
+      z-index: 5000;
+
+      width: 230px;
+
+      background: #ffffff;
+
+      border:
+        1px solid #dfe3e8;
+
+      border-radius: 8px;
+
+      box-shadow:
+        0 10px 25px
+        rgba(16, 24, 40, 0.12),
+        0 2px 6px
+        rgba(16, 24, 40, 0.06);
+
+      overflow: hidden;
+    }
+
+
+    .menu-header {
+      padding: 11px 13px;
+
+      border-bottom:
+        1px solid #eaecf0;
+
+      background: #f8fafc;
+    }
+
+    .menu-label {
+      font-size: 11px;
+      color: #98a2b3;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
+
+    .menu-service {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1d2939;
+    }
+
+
+    .menu-action {
+      width: 100%;
+
+      padding: 11px 13px;
+
+      border: 0;
+
+      background: #ffffff;
+
+      color: #344054;
+
+      text-align: left;
+
+      font-size: 13px;
+      font-weight: 500;
+
+      cursor: pointer;
+    }
+
+    .menu-action:hover {
+      background: #f2f6ff;
+      color: #175cd3;
+    }
+
+    .menu-action-icon {
+      margin-right: 8px;
+      color: #2563eb;
+    }
+
+
+    /* =========================================================
+       FILTERED SERVICE
+       ========================================================= */
+
+    .selected-service rect,
+    .selected-service polygon,
+    .selected-service path {
+      stroke: #2563eb !important;
+      stroke-width: 3px !important;
+
+      filter:
+        drop-shadow(
+          0 0 5px
+          rgba(37, 99, 235, 0.22)
+        );
+    }
+
+
+    /* =========================================================
+       LEGEND
+       ========================================================= */
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+
+      padding: 12px 20px;
+
+      border-top:
+        1px solid #e7eaee;
+
+      background: #fafbfc;
+
+      font-size: 12px;
+      color: #667085;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .legend-box {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1px solid;
+    }
+
+    .legend-customer {
+      background: #eaf2ff;
+      border-color: #7aa7e8;
+    }
+
+    .legend-commerce {
+      background: #eef7f1;
+      border-color: #79ad89;
+    }
+
+    .legend-infra {
+      background: #f2f4f7;
+      border-color: #98a2b3;
+    }
+
+    .legend-notification {
+      background: #fff4e8;
+      border-color: #e5a35d;
+    }
+
+
+    /* =========================================================
+       MOBILE
+       ========================================================= */
+
+    @media (max-width: 900px) {
+
+      body {
+        padding: 16px;
+      }
+
+      .diagram-wrapper {
+        padding: 15px;
+      }
+
+      .toolbar {
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .legend {
+        flex-wrap: wrap;
+      }
+
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+
+  <!-- =========================================================
+       HEADER
+       ========================================================= -->
+
+  <div class="page-header">
+
+    <h1 class="page-title">
+      Enterprise Microservices Architecture
+    </h1>
+
+    <div class="page-subtitle">
+      Service landscape and direct service dependencies
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       ARCHITECTURE CARD
+       ========================================================= -->
+
+  <div class="architecture-card">
+
+
+    <!-- TOOLBAR -->
+
+    <div class="toolbar">
+
+      <div class="filter-status">
+
+        <span
+          id="statusDot"
+          class="status-dot">
+        </span>
+
+        <span id="filterInfo">
+          All services
+        </span>
+
+      </div>
+
+
+      <button
+        id="resetFilter"
+        class="reset-button"
+        onclick="showAllServices()">
+
+        Show all services
+
+      </button>
+
+    </div>
+
+
+    <!-- DIAGRAM -->
+
+    <div class="diagram-wrapper">
+
+      <div id="diagram"></div>
+
+    </div>
+
+
+    <!-- LEGEND -->
+
+    <div class="legend">
+
+      <div class="legend-item">
+
+        <span class="legend-box legend-customer"></span>
+
+        Customer Services
+
+      </div>
+
+
+      <div class="legend-item">
+
+        <span class="legend-box legend-commerce"></span>
+
+        Commerce Services
+
+      </div>
+
+
+      <div class="legend-item">
+
+        <span class="legend-box legend-infra"></span>
+
+        Infrastructure
+
+      </div>
+
+
+      <div class="legend-item">
+
+        <span class="legend-box legend-notification"></span>
+
+        Notification Services
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =========================================================
+       SERVICE ACTION MENU
+       ========================================================= -->
+
+  <div id="serviceMenu">
+
+    <div class="menu-header">
+
+      <div class="menu-label">
+        Service
+      </div>
+
+      <div
+        id="menuServiceName"
+        class="menu-service">
+      </div>
+
+    </div>
+
+
+    <button
+      id="filterServiceButton"
+      class="menu-action">
+
+      <span class="menu-action-icon">
+        ⊙
+      </span>
+
+      View service dependencies
+
+    </button>
+
+  </div>
+
+
+<script>
+
+
+  /* =========================================================
+     MERMAID CONFIGURATION
+     ========================================================= */
+
+  mermaid.initialize({
+
+    startOnLoad: false,
+
+    theme: "base",
+
+    securityLevel: "loose",
+
+    themeVariables: {
+
+      fontFamily:
+        "Inter, -apple-system, BlinkMacSystemFont, Segoe UI, Arial, sans-serif",
+
+      fontSize: "13px",
+
+      primaryTextColor: "#1d2939",
+
+      lineColor: "#98a2b3",
+
+      clusterBkg: "#f8fafc",
+
+      clusterBorder: "#d0d5dd",
+
+      tertiaryColor: "#ffffff"
+
+    },
+
+    flowchart: {
+
+      useMaxWidth: false,
+
+      htmlLabels: true,
+
+      curve: "basis",
+
+      nodeSpacing: 55,
+
+      rankSpacing: 70,
+
+      padding: 15
+
+    }
+
+  });
+
+
+  /* =========================================================
+     SERVICE DEFINITIONS
+     ========================================================= */
+
+  const services = {
+
+    UserService: {
+      name: "User Service",
+      group: "Customer Services",
+      className: "customer"
+    },
+
+    AuthService: {
+      name: "Authentication Service",
+      group: "Customer Services",
+      className: "customer"
+    },
+
+    SearchService: {
+      name: "Search Service",
+      group: "Customer Services",
+      className: "customer"
+    },
+
+
+    OrderService: {
+      name: "Order Service",
+      group: "E-Commerce Services",
+      className: "commerce"
+    },
+
+    PaymentService: {
+      name: "Payment Service",
+      group: "E-Commerce Services",
+      className: "commerce"
+    },
+
+    InventoryService: {
+      name: "Inventory Service",
+      group: "E-Commerce Services",
+      className: "commerce"
+    },
+
+    ShippingService: {
+      name: "Shipping Service",
+      group: "E-Commerce Services",
+      className: "commerce"
+    },
+
+    CatalogService: {
+      name: "Catalog Service",
+      group: "E-Commerce Services",
+      className: "commerce"
+    },
+
+    RecommendationService: {
+      name: "Recommendation Service",
+      group: "E-Commerce Services",
+      className: "commerce"
+    },
+
+    BillingService: {
+      name: "Billing Service",
+      group: "E-Commerce Services",
+      className: "commerce"
+    },
+
+
+    GatewayService: {
+      name: "API Gateway",
+      group: "Infrastructure Services",
+      className: "infra"
+    },
+
+    ConfigService: {
+      name: "Configuration Service",
+      group: "Infrastructure Services",
+      className: "infra"
+    },
+
+    LoggingService: {
+      name: "Logging Service",
+      group: "Infrastructure Services",
+      className: "infra"
+    },
+
+    MonitoringService: {
+      name: "Monitoring Service",
+      group: "Infrastructure Services",
+      className: "infra"
+    },
+
+    QueueService: {
+      name: "Message Queue",
+      group: "Infrastructure Services",
+      className: "infra"
+    },
+
+    CacheService: {
+      name: "Cache Service",
+      group: "Infrastructure Services",
+      className: "infra"
+    },
+
+    AnalyticsService: {
+      name: "Analytics Service",
+      group: "Infrastructure Services",
+      className: "infra"
+    },
+
+
+    NotificationService: {
+      name: "Notification Service",
+      group: "Notification Services",
+      className: "notify"
+    },
+
+    EmailService: {
+      name: "Email Service",
+      group: "Notification Services",
+      className: "notify"
+    },
+
+    SMSService: {
+      name: "SMS Service",
+      group: "Notification Services",
+      className: "notify"
+    }
+
+  };
+
+
+  /* =========================================================
+     DEPENDENCIES
+
+     source --> target
+     ========================================================= */
+
+  const dependencies = [
+
+    ["UserService", "AuthService"],
+
+    ["SearchService", "AuthService"],
+
+    ["AuthService", "OrderService"],
+
+    ["AuthService", "GatewayService"],
+
+    ["OrderService", "PaymentService"],
+
+    ["OrderService", "InventoryService"],
+
+    ["PaymentService", "NotificationService"],
+
+    ["PaymentService", "BillingService"],
+
+    ["InventoryService", "CatalogService"],
+
+    ["ShippingService", "NotificationService"],
+
+    ["NotificationService", "EmailService"],
+
+    ["NotificationService", "SMSService"]
+
+  ];
+
+
+  /* =========================================================
+     STATE
+     ========================================================= */
+
+  let selectedService = null;
+
+  let currentFilter = null;
+
+
+  /* =========================================================
+     GET CONNECTED SERVICES
+     ========================================================= */
+
+  function getConnectedServices(serviceId) {
+
+    const connected =
+      new Set();
+
+    connected.add(serviceId);
+
+
+    dependencies.forEach(
+      ([source, target]) => {
+
+        if (source === serviceId) {
+          connected.add(target);
+        }
+
+        if (target === serviceId) {
+          connected.add(source);
+        }
+
+      }
+    );
+
+
+    return Array.from(connected);
+
+  }
+
+
+  /* =========================================================
+     GENERATE MERMAID
+     ========================================================= */
+
+  function generateMermaidDiagram(
+    filterService = null
+  ) {
+
+    let visibleServices =
+      Object.keys(services);
+
+
+    /*
+     * If filtering, only show:
+     *
+     * selected service
+     * +
+     * directly connected services
+     */
+
+    if (filterService) {
+
+      visibleServices =
+        getConnectedServices(
+          filterService
+        );
+
+    }
+
+
+    let diagram = `
+
+flowchart TD
+
+classDef customer fill:#eaf2ff,color:#173b68,stroke:#7aa7e8,stroke-width:1.5px;
+classDef commerce fill:#eef7f1,color:#205c35,stroke:#79ad89,stroke-width:1.5px;
+classDef infra fill:#f2f4f7,color:#344054,stroke:#98a2b3,stroke-width:1.5px;
+classDef notify fill:#fff4e8,color:#8a4b08,stroke:#e5a35d,stroke-width:1.5px;
+
+`;
+
+
+    /* ---------------------------------------------------------
+       GROUP SERVICES
+       --------------------------------------------------------- */
+
+    const groups = {};
+
+
+    visibleServices.forEach(
+      serviceId => {
+
+        const service =
+          services[serviceId];
+
+
+        if (!groups[service.group]) {
+
+          groups[service.group] = [];
+
+        }
+
+
+        groups[service.group].push(
+          serviceId
+        );
+
+      }
+    );
+
+
+    /* ---------------------------------------------------------
+       SUBGRAPHS
+       --------------------------------------------------------- */
+
+    Object.keys(groups).forEach(
+      groupName => {
+
+        const groupId =
+          groupName
+            .replace(
+              /[^a-zA-Z0-9]/g,
+              "_"
+            );
+
+
+        diagram += `
+
+subgraph ${groupId} ["${groupName}"]
+
+`;
+
+        groups[groupName].forEach(
+          serviceId => {
+
+            const service =
+              services[serviceId];
+
+
+            diagram += `
+
+${serviceId}["${service.name}"]:::${service.className}
+
+`;
+
+          }
+        );
+
+
+        diagram += `
+
+end
+
+`;
+
+      }
+    );
+
+
+    /* ---------------------------------------------------------
+       DEPENDENCY LINES
+       --------------------------------------------------------- */
+
+    dependencies.forEach(
+      ([source, target]) => {
+
+        if (
+          visibleServices.includes(source) &&
+          visibleServices.includes(target)
+        ) {
+
+          diagram += `
+
+${source} --> ${target}
+
+`;
+
+        }
+
+      }
+    );
+
+
+    return diagram;
+
+  }
+
+
+  /* =========================================================
+     RENDER
+     ========================================================= */
+
+  async function renderDiagram(
+    filterService = null
+  ) {
+
+    currentFilter =
+      filterService;
+
+
+    const diagramElement =
+      document.getElementById(
+        "diagram"
+      );
+
+
+    const diagramId =
+      "architecture_" +
+      Date.now();
+
+
+    const mermaidCode =
+      generateMermaidDiagram(
+        filterService
+      );
+
+
+    try {
+
+      const result =
+        await mermaid.render(
+          diagramId,
+          mermaidCode
+        );
+
+
+      diagramElement.innerHTML =
+        result.svg;
+
+
+      if (result.bindFunctions) {
+
+        result.bindFunctions(
+          diagramElement
+        );
+
+      }
+
+
+      attachServiceClickHandlers();
+
+      updateFilterStatus(
+        filterService
+      );
+
+
+    }
+    catch (error) {
+
+      console.error(
+        "Diagram rendering error:",
+        error
+      );
+
+      diagramElement.innerHTML = `
+
+<div style="
+  padding:40px;
+  color:#b42318;
+  text-align:center;
+">
+
+  Unable to render architecture diagram.
+
+</div>
+
+`;
+
+    }
+
+  }
+
+
+  /* =========================================================
+     SERVICE CLICK HANDLERS
+     ========================================================= */
+
+  function attachServiceClickHandlers() {
+
+    const nodes =
+      document.querySelectorAll(
+        "#diagram .node"
+      );
+
+
+    nodes.forEach(
+      node => {
+
+        const nodeId =
+          node.getAttribute(
+            "id"
+          );
+
+
+        if (!nodeId) {
+          return;
+        }
+
+
+        const serviceId =
+          Object.keys(services)
+            .find(
+              service =>
+                nodeId.includes(
+                  service
+                )
+            );
+
+
+        if (!serviceId) {
+          return;
+        }
+
+
+        node.dataset.service =
+          serviceId;
+
+
+        node.addEventListener(
+          "click",
+          function(event) {
+
+            event.stopPropagation();
+
+
+            selectedService =
+              serviceId;
+
+
+            showServiceMenu(
+              serviceId,
+              event
+            );
+
+          }
+        );
+
+      }
+    );
+
+  }
+
+
+  /* =========================================================
+     SERVICE MENU
+     ========================================================= */
+
+  function showServiceMenu(
+    serviceId,
+    event
+  ) {
+
+    const menu =
+      document.getElementById(
+        "serviceMenu"
+      );
+
+
+    const serviceName =
+      document.getElementById(
+        "menuServiceName"
+      );
+
+
+    serviceName.textContent =
+      services[serviceId].name;
+
+
+    let x =
+      event.clientX + 10;
+
+
+    let y =
+      event.clientY + 10;
+
+
+    const menuWidth = 230;
+
+    const menuHeight = 100;
+
+
+    if (
+      x + menuWidth >
+      window.innerWidth
+    ) {
+
+      x =
+        window.innerWidth -
+        menuWidth -
+        12;
+
+    }
+
+
+    if (
+      y + menuHeight >
+      window.innerHeight
+    ) {
+
+      y =
+        window.innerHeight -
+        menuHeight -
+        12;
+
+    }
+
+
+    menu.style.left =
+      x + "px";
+
+    menu.style.top =
+      y + "px";
+
+
+    menu.style.display =
+      "block";
+
+  }
+
+
+  /* =========================================================
+     FILTER ACTION
+     ========================================================= */
+
+  document
+    .getElementById(
+      "filterServiceButton"
+    )
+    .addEventListener(
+      "click",
+      function(event) {
+
+        event.stopPropagation();
+
+
+        if (!selectedService) {
+          return;
+        }
+
+
+        const service =
+          selectedService;
+
+
+        hideServiceMenu();
+
+
+        renderDiagram(
+          service
+        );
+
+      }
+    );
+
+
+  /* =========================================================
+     FILTER STATUS
+     ========================================================= */
+
+  function updateFilterStatus(
+    filterService
+  ) {
+
+    const info =
+      document.getElementById(
+        "filterInfo"
+      );
+
+
+    const resetButton =
+      document.getElementById(
+        "resetFilter"
+      );
+
+
+    const statusDot =
+      document.getElementById(
+        "statusDot"
+      );
+
+
+    if (!filterService) {
+
+      info.textContent =
+        "All services";
+
+      resetButton.style.display =
+        "none";
+
+      statusDot.classList.remove(
+        "active"
+      );
+
+      return;
+
+    }
+
+
+    const connected =
+      getConnectedServices(
+        filterService
+      );
+
+
+    info.textContent =
+      `${services[filterService].name}  ·  ${connected.length - 1} direct dependenc${connected.length - 1 === 1 ? "y" : "ies"}`;
+
+
+    resetButton.style.display =
+      "block";
+
+
+    statusDot.classList.add(
+      "active"
+    );
+
+
+    /*
+     * Highlight selected service
+     */
+
+    setTimeout(
+      () => {
+
+        const nodes =
+          document.querySelectorAll(
+            "#diagram .node"
+          );
+
+
+        nodes.forEach(
+          node => {
+
+            if (
+              node.dataset.service ===
+              filterService
+            ) {
+
+              node.classList.add(
+                "selected-service"
+              );
+
+            }
+
+          }
+        );
+
+      },
+      50
+    );
+
+  }
+
+
+  /* =========================================================
+     RESET
+     ========================================================= */
+
+  function showAllServices() {
+
+    currentFilter = null;
+
+    selectedService = null;
+
+    hideServiceMenu();
+
+    renderDiagram();
+
+  }
+
+
+  /* =========================================================
+     HIDE MENU
+     ========================================================= */
+
+  function hideServiceMenu() {
+
+    document.getElementById(
+      "serviceMenu"
+    ).style.display =
+      "none";
+
+  }
+
+
+  /* =========================================================
+     CLOSE MENU
+     ========================================================= */
+
+  document.addEventListener(
+    "click",
+    function() {
+
+      hideServiceMenu();
+
+    }
+  );
+
+
+  /* =========================================================
+     INITIAL RENDER
+     ========================================================= */
+
+  renderDiagram();
+
+</script>
+
+</body>
+</html>
